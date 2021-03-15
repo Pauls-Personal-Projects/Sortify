@@ -18,4 +18,9 @@
         </activity>
     </application>
 
+    <!--This Ensures that Only Devices with a Camera can Download our App-->
+    <uses-feature android:name="android.hardware.camera"
+        android:required="true" />
+
+
 </manifest>
