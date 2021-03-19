@@ -21,6 +21,6 @@
     <!--This Ensures that Only Devices with a Camera can Download our App-->
     <uses-feature android:name="android.hardware.camera"
         android:required="true" />
-
+    <uses-permission android:name="android.permission.INTERNET" />
 
 </manifest>
