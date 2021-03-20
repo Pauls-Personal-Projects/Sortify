@@ -1,3 +1,8 @@
+/*
+* Sample code for Google Cloud Vision:
+*  https://github.com/GoogleCloudPlatform/cloud-vision
+*/
+
 package google.sc21.sortify;
 
 import android.content.pm.PackageInfo;

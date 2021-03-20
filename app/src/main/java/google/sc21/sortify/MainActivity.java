@@ -1,12 +1,54 @@
-// Sortify App 13/03/2021
-// Made by Paul & Udit
-// for Google's 2021 Solution Challenge
+//region HEADER, CREDITS & VERSION HISTORY
+/*
+* --------------------------------------------------
+* Sortify App, Created 13/03/2021
+* Made by Paul & Udit
+* for Google's 2021 Solution Challenge
+* --------------------------------------------------
+* CREDITS:
+*
+* Android Developers Camera Documentation:
+* https://developer.android.com/training/camera/photobasics
+* Sample code for Google Cloud Vision:
+*  https://github.com/GoogleCloudPlatform/cloud-vision
+* --------------------------------------------------
+* VERSION HISTORY:
+*
+* Version 0.5:
+*  Cleaned Code + Improved Comments
+* - - - - - - - - - - - - - - - - - - - - - - - - -
+* Version 0.4:
+*  Image Capturing and Labelling Working!
+*  Still not exactly sure about the resolution...
+*  (Really Messy Code, I Promise I'll Clean This in
+*  the Future!!!)
+* - - - - - - - - - - - - - - - - - - - - - - - - -
+* Version 0.3:
+*  Camera & Image Capture Working.
+*  Might need to investigate the image resolution?
+*  Also GUI Looks a bit wonky, might need to work
+*  on that as well if we have time.
+* - - - - - - - - - - - - - - - - - - - - - - - - -
+* Version 0.2:
+*  Prepared GUI for Camera Interface.
+*  Tweaked theme to more suite our app idea! ;)
+* - - - - - - - - - - - - - - - - - - - - - - - - -
+* Version 0.1:
+*   First Commit! Empty Android Studio Template.
+ */
+//endregion
 
+
+
+// OUR PACKAGE
 package google.sc21.sortify;
 
-// IMPORTS
-import androidx.appcompat.app.AppCompatActivity;
 
+
+//region IMPORT REQUIRED PACKAGES
+// New Android X Classes
+import androidx.appcompat.app.AppCompatActivity;
+// Android Classes
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -18,7 +60,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
+// Google Classes
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -33,23 +75,26 @@ import com.google.api.services.vision.v1.model.BatchAnnotateImagesResponse;
 import com.google.api.services.vision.v1.model.EntityAnnotation;
 import com.google.api.services.vision.v1.model.Feature;
 import com.google.api.services.vision.v1.model.Image;
-
+// Java Classes
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+//endregion
 
 
-// MAIN
+
+// MAIN ACTVITY CLASS
 public class MainActivity extends AppCompatActivity {
-    // GUI Objects:
+    //region Declare Class Objects
+    //GUI Objects:
     private Button cameraButton;
     private TextView testLabel;
     private ImageView imageBox;
     private Bitmap junkPhoto;
-    // Constants/Parameters:
+    //Constants/Parameters:
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int MAX_LABEL_RESULTS = 10;
     private static final int MAX_DIMENSION = 1200;
@@ -57,9 +102,10 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final String ANDROID_CERT_HEADER = "X-Android-Cert";
     private static final String ANDROID_PACKAGE_HEADER = "X-Android-Package";
+    //endregion
 
 
-
+    //region Capture Photo Functions
     // Calls Camera Activity:
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -77,18 +123,17 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Bundle extras = data.getExtras();
             junkPhoto = (Bitmap) extras.get("data");
-            imageBox.setImageBitmap(junkPhoto);
             uploadImage(junkPhoto);
         }
     }
+    //endregion
 
 
-
+    //region Process Photo Functions
+    // Sets the Image and Calls Cloud:
     public void uploadImage(Bitmap bitmapImage) {
         if (bitmapImage != null) {
-            // scale the image to save on bandwidth
             Bitmap bitmap = scaleBitmapDown(bitmapImage, MAX_DIMENSION);
-
             callCloudVision(bitmap);
             imageBox.setImageBitmap(bitmap);
         } else {
@@ -96,14 +141,34 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.image_picker_error, Toast.LENGTH_LONG).show();
         }
     }
+    // Scales the Image to Save on Bandwidth:
+    private Bitmap scaleBitmapDown(Bitmap bitmap, int maxDimension) {
+        int originalWidth = bitmap.getWidth();
+        int originalHeight = bitmap.getHeight();
+        int resizedWidth = maxDimension;
+        int resizedHeight = maxDimension;
+
+        if (originalHeight > originalWidth) {
+            resizedHeight = maxDimension;
+            resizedWidth = (int) (resizedHeight * (float) originalWidth / (float) originalHeight);
+        } else if (originalWidth > originalHeight) {
+            resizedWidth = maxDimension;
+            resizedHeight = (int) (resizedWidth * (float) originalHeight / (float) originalWidth);
+        } else if (originalHeight == originalWidth) {
+            resizedHeight = maxDimension;
+            resizedWidth = maxDimension;
+        }
+        return Bitmap.createScaledBitmap(bitmap, resizedWidth, resizedHeight, false);
+    }
+    //endregion
 
 
-
+    //region Threading Function
     private void callCloudVision(final Bitmap bitmap) {
-        // Switch text to loading
+        //Switch Text to Loading
         testLabel.setText(R.string.loading_message);
 
-        // Do the real work in an async task, because we need to use the network anyway
+        //Do the real work in an async task, because we need to use the network anyway
         try {
             AsyncTask<Object, Void, String> labelDetectionTask = new LabelDetectionTask(this, prepareAnnotationRequest(bitmap));
             labelDetectionTask.execute();
@@ -111,9 +176,10 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "failed to make API request because of other IOException " + e.getMessage());
         }
     }
+    //endregion
 
 
-
+    //region Thread Tasks Class
     private static class LabelDetectionTask extends AsyncTask<Object, Void, String> {
         private final WeakReference<MainActivity> mActivityWeakReference;
         private Vision.Images.Annotate mRequest;
@@ -129,12 +195,10 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "created Cloud Vision request object, sending request");
                 BatchAnnotateImagesResponse response = mRequest.execute();
                 return convertResponseToString(response);
-
             } catch (GoogleJsonResponseException e) {
                 Log.d(TAG, "failed to make API request because " + e.getContent());
             } catch (IOException e) {
-                Log.d(TAG, "failed to make API request because of other IOException " +
-                        e.getMessage());
+                Log.d(TAG, "failed to make API request because of other IOException " + e.getMessage());
             }
             return "Cloud Vision API request failed. Check logs for details.";
         }
@@ -147,9 +211,10 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+    //endregion
 
 
-
+    //region Google Cloud Communication Function
     private Vision.Images.Annotate prepareAnnotationRequest(Bitmap bitmap) throws IOException {
         HttpTransport httpTransport = AndroidHttp.newCompatibleTransport();
         JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
@@ -216,30 +281,10 @@ public class MainActivity extends AppCompatActivity {
 
         return annotateRequest;
     }
+    //endregion
 
 
-
-    private Bitmap scaleBitmapDown(Bitmap bitmap, int maxDimension) {
-        int originalWidth = bitmap.getWidth();
-        int originalHeight = bitmap.getHeight();
-        int resizedWidth = maxDimension;
-        int resizedHeight = maxDimension;
-
-        if (originalHeight > originalWidth) {
-            resizedHeight = maxDimension;
-            resizedWidth = (int) (resizedHeight * (float) originalWidth / (float) originalHeight);
-        } else if (originalWidth > originalHeight) {
-            resizedWidth = maxDimension;
-            resizedHeight = (int) (resizedWidth * (float) originalHeight / (float) originalWidth);
-        } else if (originalHeight == originalWidth) {
-            resizedHeight = maxDimension;
-            resizedWidth = maxDimension;
-        }
-        return Bitmap.createScaledBitmap(bitmap, resizedWidth, resizedHeight, false);
-    }
-
-
-
+    //region Response Translation Function
     private static String convertResponseToString(BatchAnnotateImagesResponse response) {
         StringBuilder message = new StringBuilder("I found these things:\n\n");
 
@@ -255,10 +300,11 @@ public class MainActivity extends AppCompatActivity {
 
         return message.toString();
     }
+    //endregion
 
 
 
-    //MAIN:
+    //region MAIN FUNCTION
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // Connect GUI with Code
@@ -274,4 +320,5 @@ public class MainActivity extends AppCompatActivity {
             dispatchTakePictureIntent();
         });
     }
+    //endregion
 }

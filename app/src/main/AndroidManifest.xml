@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--Sortify App, Created 13/03/2021     -->
+<!--Made by Paul & Udit                 -->
+<!--for Google's 2021 Solution Challenge-->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="google.sc21.sortify">
 
