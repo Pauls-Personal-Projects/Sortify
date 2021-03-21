@@ -14,6 +14,11 @@
 * --------------------------------------------------
 * VERSION HISTORY:
 *
+* Version 0.6:
+*  Implemented CSV Dataset Handling.
+*  Implemented Scanned Label to Data Matching for
+*   Providing Recycling Instructions.
+* - - - - - - - - - - - - - - - - - - - - - - - - -
 * Version 0.5:
 *  Cleaned Code + Improved Comments
 * - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -76,12 +81,15 @@ import com.google.api.services.vision.v1.model.EntityAnnotation;
 import com.google.api.services.vision.v1.model.Feature;
 import com.google.api.services.vision.v1.model.Image;
 // Java Classes
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Scanner;
 //endregion
 
 
@@ -94,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView testLabel;
     private ImageView imageBox;
     private Bitmap junkPhoto;
+    private static List<Junk> referenceDataSet;
     //Constants/Parameters:
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int MAX_LABEL_RESULTS = 10;
@@ -102,6 +111,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final String ANDROID_CERT_HEADER = "X-Android-Cert";
     private static final String ANDROID_PACKAGE_HEADER = "X-Android-Package";
+    private static final String DATASET_FILENAME = "test_dataset.csv";
     //endregion
 
 
@@ -170,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
 
         //Do the real work in an async task, because we need to use the network anyway
         try {
-            AsyncTask<Object, Void, String> labelDetectionTask = new LabelDetectionTask(this, prepareAnnotationRequest(bitmap));
+            AsyncTask<Object, Void, List<EntityAnnotation>> labelDetectionTask = new LabelDetectionTask(this, prepareAnnotationRequest(bitmap));
             labelDetectionTask.execute();
         } catch (IOException e) {
             Log.d(TAG, "failed to make API request because of other IOException " + e.getMessage());
@@ -180,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     //region Thread Tasks Class
-    private static class LabelDetectionTask extends AsyncTask<Object, Void, String> {
+    private static class LabelDetectionTask extends AsyncTask<Object, Void, List<EntityAnnotation>> {
         private final WeakReference<MainActivity> mActivityWeakReference;
         private Vision.Images.Annotate mRequest;
 
@@ -190,24 +200,26 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected String doInBackground(Object... params) {
+        protected List<EntityAnnotation> doInBackground(Object... params) {
             try {
                 Log.d(TAG, "created Cloud Vision request object, sending request");
                 BatchAnnotateImagesResponse response = mRequest.execute();
-                return convertResponseToString(response);
+                List<EntityAnnotation> labels = response.getResponses().get(0).getLabelAnnotations();
+                return labels;
             } catch (GoogleJsonResponseException e) {
                 Log.d(TAG, "failed to make API request because " + e.getContent());
             } catch (IOException e) {
                 Log.d(TAG, "failed to make API request because of other IOException " + e.getMessage());
             }
-            return "Cloud Vision API request failed. Check logs for details.";
+            return null;
+            //return "Cloud Vision API request failed. Check logs for details.";
         }
 
-        protected void onPostExecute(String result) {
+        protected void onPostExecute(List<EntityAnnotation> result) {
             MainActivity activity = mActivityWeakReference.get();
             if (activity != null && !activity.isFinishing()) {
                 TextView imageDetail = activity.findViewById(R.id.helloLabel);
-                imageDetail.setText(result);
+                imageDetail.setText(analyseResponse(result));
             }
         }
     }
@@ -284,21 +296,50 @@ public class MainActivity extends AppCompatActivity {
     //endregion
 
 
-    //region Response Translation Function
-    private static String convertResponseToString(BatchAnnotateImagesResponse response) {
-        StringBuilder message = new StringBuilder("I found these things:\n\n");
+    //region Response Analysing Function
+    private static String analyseResponse(List<EntityAnnotation> labels) {
+        StringBuilder message = new StringBuilder();
 
-        List<EntityAnnotation> labels = response.getResponses().get(0).getLabelAnnotations();
         if (labels != null) {
             for (EntityAnnotation label : labels) {
                 message.append(String.format(Locale.US, "%.3f: %s", label.getScore(), label.getDescription()));
+                boolean matchFound = false;
+                int item = 0;
+                while (!matchFound && item < referenceDataSet.size()) {
+                    if (referenceDataSet.get(item).matches(label.getDescription())) {
+                        message.append(", Bin: " + referenceDataSet.get(item).returnInfo());
+                        matchFound = true;
+                    }
+                    item++;
+                }
                 message.append("\n");
             }
         } else {
             message.append("nothing");
         }
-
         return message.toString();
+    }
+    //endregion
+
+
+    //region CSV File Import Function
+    private List<Junk> importDataset() {
+        List<Junk> referenceData = new ArrayList<>();
+
+        try (InputStreamReader is = new InputStreamReader(getAssets().open(DATASET_FILENAME))){
+            BufferedReader reader = new BufferedReader(is);
+            reader.readLine();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                try (Scanner column = new Scanner(line)) {
+                    column.useDelimiter(",");
+                    referenceData.add(Junk.newItemFromCSV(column));
+                }
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "File Not Found: " + e);
+        }
+        return referenceData;
     }
     //endregion
 
@@ -314,10 +355,14 @@ public class MainActivity extends AppCompatActivity {
         testLabel = findViewById(R.id.helloLabel);
         imageBox = findViewById(R.id.photoView);
 
+        // Import Data-Set
+        referenceDataSet = importDataset();
+
         // Camera Button Pressed
         cameraButton.setOnClickListener(v -> {
             testLabel.setText("Open Camera");
             dispatchTakePictureIntent();
+
         });
     }
     //endregion
