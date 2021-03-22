@@ -9,6 +9,11 @@ public class Junk {
     private List<String> aliases = new LinkedList<String>();
     private String binColour;
 
+    public Junk(String junkName, List<String> junkAliases, String junkBinColour) {
+        name = junkName;
+        aliases = junkAliases;
+        binColour = junkBinColour;
+    }
     private Junk() {}
 
     public static Junk newItemFromCSV(Scanner scanner) {
@@ -19,7 +24,7 @@ public class Junk {
             item.aliases.add(temp);
             if (item.aliases != null && item.aliases.get(0).contains("\"")) {
                 item.aliases.set(0,item.aliases.get(0).substring(1));
-                item.aliases.add(scanner.next());
+                item.aliases.add(scanner.next().toLowerCase());
                 while (!(item.aliases.get(item.aliases.size() - 1).contains("\""))) {
                     item.aliases.add(scanner.next().toLowerCase());
                 }
@@ -38,8 +43,9 @@ public class Junk {
         }
     }
 
-    public String returnInfo() {
-        return binColour;
+    public String returnName() {return name;}
+    public List<String> returnAliases() {return aliases;}
+    public String returnInfo() {return binColour;
     }
 
 }

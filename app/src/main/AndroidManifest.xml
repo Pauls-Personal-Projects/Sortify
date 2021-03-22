@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--Sortify App, Created 13/03/2021     -->
-<!--Made by Paul & Udit                 -->
-<!--for Google's 2021 Solution Challenge-->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="google.sc21.sortify">
+    <!-- This Ensures that Only Devices with a Camera can Download our App -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -12,6 +15,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Sortify">
+        <activity android:name=".ExploreActivity"></activity>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -20,10 +24,5 @@
             </intent-filter>
         </activity>
     </application>
-
-    <!--This Ensures that Only Devices with a Camera can Download our App-->
-    <uses-feature android:name="android.hardware.camera"
-        android:required="true" />
-    <uses-permission android:name="android.permission.INTERNET" />
 
 </manifest>

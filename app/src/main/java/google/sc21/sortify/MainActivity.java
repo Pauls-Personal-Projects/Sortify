@@ -14,6 +14,11 @@
 * --------------------------------------------------
 * VERSION HISTORY:
 *
+* Version 0.7:
+*  Implemented a List View for Displaying Results
+*  Improved Matching function to Create a List of
+*   Only Items that Both the Camera and Database saw
+* - - - - - - - - - - - - - - - - - - - - - - - - -
 * Version 0.6:
 *  Implemented CSV Dataset Handling.
 *  Implemented Scanned Label to Data Matching for
@@ -101,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
     private Button cameraButton;
     private TextView testLabel;
     private ImageView imageBox;
-    private Bitmap junkPhoto;
+    private static Bitmap junkPhoto;
     private static List<Junk> referenceDataSet;
     //Constants/Parameters:
     private static final int REQUEST_IMAGE_CAPTURE = 1;
@@ -145,7 +150,6 @@ public class MainActivity extends AppCompatActivity {
         if (bitmapImage != null) {
             Bitmap bitmap = scaleBitmapDown(bitmapImage, MAX_DIMENSION);
             callCloudVision(bitmap);
-            imageBox.setImageBitmap(bitmap);
         } else {
             Log.d(TAG, "Image picker gave us a null image.");
             Toast.makeText(this, R.string.image_picker_error, Toast.LENGTH_LONG).show();
@@ -185,6 +189,8 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             Log.d(TAG, "failed to make API request because of other IOException " + e.getMessage());
         }
+        Intent discoverActivity = new Intent(this, ExploreActivity.class);
+        startActivity(discoverActivity);
     }
     //endregion
 
@@ -220,6 +226,11 @@ public class MainActivity extends AppCompatActivity {
             if (activity != null && !activity.isFinishing()) {
                 TextView imageDetail = activity.findViewById(R.id.helloLabel);
                 imageDetail.setText(analyseResponse(result));
+
+                //ExploreActivity.loadData(referenceDataSet);
+                ExploreActivity.loadData(matchData(result));
+                ExploreActivity.setImage(junkPhoto);
+
             }
         }
     }
@@ -318,6 +329,30 @@ public class MainActivity extends AppCompatActivity {
             message.append("nothing");
         }
         return message.toString();
+    }
+    //endregion
+
+
+    //region Relevant Info Combining Function
+    private static List<Junk> matchData(List<EntityAnnotation> labels) {
+        List<Junk> matchedData = new ArrayList<>();
+
+        if (labels != null) {
+            for (EntityAnnotation label : labels) {
+                boolean matchFound = false;
+                int item = 0;
+                while (!matchFound && item < referenceDataSet.size()) {
+                    if (referenceDataSet.get(item).matches(label.getDescription())) {
+                        if (!matchedData.contains(referenceDataSet.get(item))) {
+                            matchedData.add(referenceDataSet.get(item));
+                            matchFound = true;
+                        }
+                    }
+                    item++;
+                }
+            }
+        }
+        return matchedData;
     }
     //endregion
 
