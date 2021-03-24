@@ -23,7 +23,7 @@ android {
         }
         buildTypes.each {
             // INSERT THE GOOGLE CLOUD API KEY BELOW (Instead of "AIza..."):
-            it.buildConfigField 'String', 'API_KEY', '"AIza..."'
+            it.buildConfigField 'String', 'API_KEY', '"AIzaSyCbt2d9aEVwJylEQKw-Kuv7sbdt83oYVys"'
         }
     }
     compileOptions {

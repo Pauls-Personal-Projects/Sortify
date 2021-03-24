@@ -14,6 +14,12 @@
 * --------------------------------------------------
 * VERSION HISTORY:
 *
+* Version 0.8:
+*  Updated the Assets to Final Dataset
+*  Created Discover Mode
+*  Created App Icon
+*  (The code is a horrible mess, please don't look)
+* - - - - - - - - - - - - - - - - - - - - - - - - -
 * Version 0.7:
 *  Implemented a List View for Displaying Results
 *  Improved Matching function to Create a List of
@@ -64,6 +70,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.Button;
@@ -90,8 +97,10 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
@@ -104,8 +113,8 @@ public class MainActivity extends AppCompatActivity {
     //region Declare Class Objects
     //GUI Objects:
     private Button cameraButton;
+    private Button discoverButton;
     private TextView testLabel;
-    private ImageView imageBox;
     private static Bitmap junkPhoto;
     private static List<Junk> referenceDataSet;
     //Constants/Parameters:
@@ -116,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final String ANDROID_CERT_HEADER = "X-Android-Cert";
     private static final String ANDROID_PACKAGE_HEADER = "X-Android-Package";
-    private static final String DATASET_FILENAME = "test_dataset.csv";
+    public static final String DATASET_FILENAME = "recyclable.csv";
     //endregion
 
 
@@ -190,6 +199,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "failed to make API request because of other IOException " + e.getMessage());
         }
         Intent discoverActivity = new Intent(this, ExploreActivity.class);
+        discoverActivity.putExtra("mode","camera");
         startActivity(discoverActivity);
     }
     //endregion
@@ -226,10 +236,10 @@ public class MainActivity extends AppCompatActivity {
             if (activity != null && !activity.isFinishing()) {
                 TextView imageDetail = activity.findViewById(R.id.helloLabel);
                 imageDetail.setText(analyseResponse(result));
+                ExploreActivity.setImage(junkPhoto);
 
                 //ExploreActivity.loadData(referenceDataSet);
                 ExploreActivity.loadData(matchData(result));
-                ExploreActivity.setImage(junkPhoto);
 
             }
         }
@@ -318,7 +328,7 @@ public class MainActivity extends AppCompatActivity {
                 int item = 0;
                 while (!matchFound && item < referenceDataSet.size()) {
                     if (referenceDataSet.get(item).matches(label.getDescription())) {
-                        message.append(", Bin: " + referenceDataSet.get(item).returnInfo());
+                        message.append(", Matched to: " + referenceDataSet.get(item).returnName());
                         matchFound = true;
                     }
                     item++;
@@ -351,6 +361,10 @@ public class MainActivity extends AppCompatActivity {
                     item++;
                 }
             }
+            if (matchedData == null) {
+                List<String> empty = new LinkedList<String>();
+                matchedData.add(new Junk("No Matches Found!",empty,"",""));
+            }
         }
         return matchedData;
     }
@@ -360,6 +374,8 @@ public class MainActivity extends AppCompatActivity {
     //region CSV File Import Function
     private List<Junk> importDataset() {
         List<Junk> referenceData = new ArrayList<>();
+        long logTime = java.lang.System.currentTimeMillis();
+        int logItems = 0;
 
         try (InputStreamReader is = new InputStreamReader(getAssets().open(DATASET_FILENAME))){
             BufferedReader reader = new BufferedReader(is);
@@ -370,10 +386,13 @@ public class MainActivity extends AppCompatActivity {
                     column.useDelimiter(",");
                     referenceData.add(Junk.newItemFromCSV(column));
                 }
+                logItems++;
             }
         } catch (IOException e) {
             Log.e(TAG, "File Not Found: " + e);
         }
+
+        testLabel.setText("Done. Fetched "+logItems+" items in "+(java.lang.System.currentTimeMillis()-logTime)+"ms!");
         return referenceData;
     }
     //endregion
@@ -387,17 +406,24 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         cameraButton = findViewById(R.id.cameraButton);
+        discoverButton = findViewById(R.id.discoverButton);
         testLabel = findViewById(R.id.helloLabel);
-        imageBox = findViewById(R.id.photoView);
 
         // Import Data-Set
         referenceDataSet = importDataset();
 
         // Camera Button Pressed
         cameraButton.setOnClickListener(v -> {
-            testLabel.setText("Open Camera");
+            testLabel.setText("Opening Camera...");
             dispatchTakePictureIntent();
 
+        });
+
+        discoverButton.setOnClickListener(v -> {
+            testLabel.setText("Opening Discover...");
+            Intent discoverActivity = new Intent(this, ExploreActivity.class);
+            discoverActivity.putExtra("mode","discover");
+            startActivity(discoverActivity);
         });
     }
     //endregion

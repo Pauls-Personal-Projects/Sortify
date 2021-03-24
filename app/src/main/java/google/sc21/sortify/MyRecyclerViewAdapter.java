@@ -43,9 +43,7 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
         String aliasTemp = junkAlias.toString().substring(1);
         aliasTemp = aliasTemp.substring(0, aliasTemp.length()-1);
         holder.aliasField.setText(aliasTemp);
-        if (junkInstruction != null) {
-            holder.descField.setText("Please dispose of me in the " + junkInstruction + " bin");
-        }
+        holder.descField.setText(junkInstruction);
     }
 
     // total number of rows
