@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--Sortify App, Created 13/03/2021     -->
-<!--Made by Paul & Udit                 -->
+<!--Made by Paul & Abdul                 -->
 <!--for Google's 2021 Solution Challenge-->
 
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="sortify_light_green">#5DCF00</color>
-    <color name="sortify_green">#4DAB00</color>
-    <color name="sortify_dark_green">#387D00</color>
+    <color name="sortify_light_green">#43A546</color>
+    <color name="sortify_dark_green">#318334</color>
+    <color name="material_ultra_light_green">#e8f5e9</color>
+    <color name="material_ultra_dark_green">#1b5e20</color>
+    <color name="material_ultra_light_teal">#e0f2f1</color>
+    <color name="material_ultra_dark_teal">#004d40</color>
+
 </resources>

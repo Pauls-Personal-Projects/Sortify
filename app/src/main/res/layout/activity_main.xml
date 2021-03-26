@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--Sortify App, Created 13/03/2021     -->
-<!--Made by Paul & Udit                 -->
+<!--Made by Paul & Abdul                -->
 <!--for Google's 2021 Solution Challenge-->
 
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -8,39 +8,68 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/sortify_green"
+    android:background="?attr/colorPrimary"
     tools:context=".MainActivity">
 
     <TextView
         android:id="@+id/helloLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="25dp"
         android:text="Hello Sortify!"
+        android:textColor="?attr/colorOnPrimary"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/cameraButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:backgroundTint="@color/sortify_dark_green"
-        android:text="Open Camera"
+    <LinearLayout
+        android:id="@+id/buttonArea"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="25pt"
+        android:layout_marginTop="25pt"
+        android:layout_marginEnd="25pt"
+        android:layout_marginBottom="25pt"
+        android:layout_weight="1"
+        android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/discoverButton"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent" />
+        app:layout_constraintDimensionRatio="1:2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/helloLabel">
 
-    <Button
-        android:id="@+id/discoverButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:backgroundTint="@color/sortify_dark_green"
-        android:text="Discover"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/cameraButton"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent" />
+        <Button
+            android:id="@+id/discoverButton"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/sortify_dark_green"
+            android:fontFamily="sans-serif-condensed"
+            android:text="Discover"
+            android:textAllCaps="true"
+            android:textColor="?attr/colorPrimaryVariant"
+            android:textSize="34sp"
+            android:textStyle="bold"
+            android:typeface="normal"
+            app:layout_constraintBottom_toTopOf="@id/discoverButton"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/buttonArea" />
+
+        <ImageButton
+            android:id="@+id/cameraButton"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="10pt"
+            android:layout_weight="1"
+            android:backgroundTint="@color/sortify_dark_green"
+            android:scaleType="fitCenter"
+            android:tint="?attr/colorPrimaryVariant"
+            app:layout_constraintBottom_toBottomOf="@id/buttonArea"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintTop_toBottomOf="@id/discoverButton"
+            app:srcCompat="@mipmap/camera_button_icon_foreground" />
+    </LinearLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

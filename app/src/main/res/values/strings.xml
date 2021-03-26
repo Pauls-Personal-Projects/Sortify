@@ -1,5 +1,5 @@
 <!--Sortify App, Created 13/03/2021     -->
-<!--Made by Paul & Udit                 -->
+<!--Made by Paul & Abdul                 -->
 <!--for Google's 2021 Solution Challenge-->
 
 <resources>
@@ -7,4 +7,6 @@
 
     <string name="image_picker_error">Something is wrong with that image. Pick a different one please.</string>
     <string name="loading_message">Uploading image. Please wait.</string>
+    <string name="junkView_description">Image that Illustrates some Junk for Sorting. Photo Taken by the User.</string>
+
 </resources>

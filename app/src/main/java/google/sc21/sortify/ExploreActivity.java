@@ -1,6 +1,7 @@
 package google.sc21.sortify;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -8,9 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -31,33 +30,7 @@ public class ExploreActivity extends AppCompatActivity implements MyRecyclerView
     private static RecyclerView exploreList;
     private static ImageView junkPhoto;
     private static Context context;
-    private static List<Junk> referenceDataSet;
 
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_explore);
-        junkPhoto = findViewById(R.id.junkView);
-        exploreList = findViewById(R.id.junkListView);
-        ExploreActivity.context = getApplicationContext();
-
-        List<Junk> template = new ArrayList<>();
-        List<String> empty = new LinkedList<String>();
-        template.add(new Junk("Please Wait...",empty,"",""));
-
-        exploreList.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new MyRecyclerViewAdapter(this, template);
-        adapter.setClickListener(this);
-        exploreList.setAdapter(adapter);
-
-        Intent intent = getIntent();
-        String mode = intent.getStringExtra("mode");
-        if (mode.equals("discover")) {
-            junkPhoto.setVisibility(View.GONE);
-            loadData(importDataset());
-        }
-    }
 
 
     public static void loadData(List<Junk> data) {
@@ -98,4 +71,33 @@ public class ExploreActivity extends AppCompatActivity implements MyRecyclerView
         return referenceData;
     }
     //endregion
+
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_explore);
+        junkPhoto = findViewById(R.id.junkView);
+        exploreList = findViewById(R.id.junkListView);
+        ExploreActivity.context = getApplicationContext();
+
+        List<Junk> template = new ArrayList<>();
+        List<String> empty = new LinkedList<String>();
+        template.add(new Junk("Please Wait...",empty,"",""));
+
+        exploreList.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new MyRecyclerViewAdapter(this, template);
+        adapter.setClickListener(this);
+        exploreList.setAdapter(adapter);
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(exploreList.getContext(), LinearLayoutManager.VERTICAL);
+        exploreList.addItemDecoration(dividerItemDecoration);
+
+        Intent intent = getIntent();
+        String mode = intent.getStringExtra("mode");
+        if (mode.equals("discover")) {
+            junkPhoto.setVisibility(View.GONE);
+            loadData(importDataset());
+        }
+    }
 }

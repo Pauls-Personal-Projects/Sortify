@@ -36,7 +36,8 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
     //Binds the data to the TextView in each row
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        String junkName = mData.get(position).returnName();
+        String junkName = (String.format("%.0f", mData.get(position).returnAccurcay()*100)+ "% " +mData.get(position).returnName());
+        //String junkName = mData.get(position).returnName();
         List<String> junkAlias = mData.get(position).returnAliases();
         String junkInstruction = mData.get(position).returnInfo();
         holder.nameField.setText(junkName);

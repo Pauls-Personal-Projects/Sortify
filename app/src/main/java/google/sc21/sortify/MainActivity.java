@@ -2,20 +2,29 @@
 /*
 * --------------------------------------------------
 * Sortify App, Created 13/03/2021
-* Made by Paul & Udit
+* Made by Paul & Abdul
 * for Google's 2021 Solution Challenge
 * --------------------------------------------------
 * CREDITS:
 *
 * Android Developers Camera Documentation:
-* https://developer.android.com/training/camera/photobasics
+*  https://developer.android.com/training/camera/photobasics
 * Sample code for Google Cloud Vision:
 *  https://github.com/GoogleCloudPlatform/cloud-vision
+* Sample code for RecyclerView:
+*  https://stackoverflow.com/a/40584425
 * --------------------------------------------------
 * VERSION HISTORY:
 *
+* Version 0.9:
+*  Fixed a Bunch of Bugs
+*  Updated Gradle Dependencies (where possible)
+*  Tweaked the GUI to not look as terrible...
+*  Improved Searching and Match Algorithm
+*  Result Sorting Based on Accuracy
+* - - - - - - - - - - - - - - - - - - - - - - - - -
 * Version 0.8:
-*  Updated the Assets to Final Dataset
+*  Updated the Assets to Final Data Set
 *  Created Discover Mode
 *  Created App Icon
 *  (The code is a horrible mess, please don't look)
@@ -26,7 +35,7 @@
 *   Only Items that Both the Camera and Database saw
 * - - - - - - - - - - - - - - - - - - - - - - - - -
 * Version 0.6:
-*  Implemented CSV Dataset Handling.
+*  Implemented CSV Data Set Handling.
 *  Implemented Scanned Label to Data Matching for
 *   Providing Recycling Instructions.
 * - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -63,18 +72,19 @@ package google.sc21.sortify;
 
 //region IMPORT REQUIRED PACKAGES
 // New Android X Classes
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 // Android Classes
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.Button;
-import android.widget.ImageView;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 // Google Classes
@@ -97,9 +107,10 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -108,13 +119,12 @@ import java.util.Scanner;
 
 
 
-// MAIN ACTVITY CLASS
+// MAIN ACTIVITY CLASS
 public class MainActivity extends AppCompatActivity {
     //region Declare Class Objects
     //GUI Objects:
-    private Button cameraButton;
-    private Button discoverButton;
-    private TextView testLabel;
+    private TextView debugLabel;
+    //Variables:
     private static Bitmap junkPhoto;
     private static List<Junk> referenceDataSet;
     //Constants/Parameters:
@@ -137,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
         } catch (ActivityNotFoundException e) {
             Log.e(String.valueOf(e), "Camera Intent not Found: ");
-            testLabel.setText("Houston, we have a problem!?");
+            debugLabel.setText("Houston, we have a problem!?");
         }
     }
     // Returns Image from Camera Activity:
@@ -189,11 +199,11 @@ public class MainActivity extends AppCompatActivity {
     //region Threading Function
     private void callCloudVision(final Bitmap bitmap) {
         //Switch Text to Loading
-        testLabel.setText(R.string.loading_message);
+        debugLabel.setText(R.string.loading_message);
 
         //Do the real work in an async task, because we need to use the network anyway
         try {
-            AsyncTask<Object, Void, List<EntityAnnotation>> labelDetectionTask = new LabelDetectionTask(this, prepareAnnotationRequest(bitmap));
+            AsyncTask<Object, Void, Pair> labelDetectionTask = new LabelDetectionTask(this, prepareAnnotationRequest(bitmap));
             labelDetectionTask.execute();
         } catch (IOException e) {
             Log.d(TAG, "failed to make API request because of other IOException " + e.getMessage());
@@ -206,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     //region Thread Tasks Class
-    private static class LabelDetectionTask extends AsyncTask<Object, Void, List<EntityAnnotation>> {
+    private static class LabelDetectionTask extends AsyncTask<Object, Void, Pair> {
         private final WeakReference<MainActivity> mActivityWeakReference;
         private Vision.Images.Annotate mRequest;
 
@@ -216,12 +226,13 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected List<EntityAnnotation> doInBackground(Object... params) {
+        protected Pair doInBackground(Object... params) {
             try {
                 Log.d(TAG, "created Cloud Vision request object, sending request");
                 BatchAnnotateImagesResponse response = mRequest.execute();
                 List<EntityAnnotation> labels = response.getResponses().get(0).getLabelAnnotations();
-                return labels;
+                Pair resultPair = matchData(labels);
+                return resultPair;
             } catch (GoogleJsonResponseException e) {
                 Log.d(TAG, "failed to make API request because " + e.getContent());
             } catch (IOException e) {
@@ -231,16 +242,22 @@ public class MainActivity extends AppCompatActivity {
             //return "Cloud Vision API request failed. Check logs for details.";
         }
 
-        protected void onPostExecute(List<EntityAnnotation> result) {
+        protected void onPostExecute(Pair resultPair) {
             MainActivity activity = mActivityWeakReference.get();
             if (activity != null && !activity.isFinishing()) {
                 TextView imageDetail = activity.findViewById(R.id.helloLabel);
-                imageDetail.setText(analyseResponse(result));
+                imageDetail.setText(resultPair.getText());
                 ExploreActivity.setImage(junkPhoto);
 
-                //ExploreActivity.loadData(referenceDataSet);
-                ExploreActivity.loadData(matchData(result));
+                Collections.sort(resultPair.getList(), new Comparator<Junk>(){
+                    public int compare(Junk obj1, Junk obj2) {
+                        // ## Descending order
+                        return Float.valueOf(obj2.returnAccurcay()).compareTo(Float.valueOf(obj1.returnAccurcay())); // To compare integer values
+                    }
+                });
 
+                //ExploreActivity.loadData(referenceDataSet);
+                ExploreActivity.loadData(resultPair.getList());
             }
         }
     }
@@ -317,56 +334,36 @@ public class MainActivity extends AppCompatActivity {
     //endregion
 
 
-    //region Response Analysing Function
-    private static String analyseResponse(List<EntityAnnotation> labels) {
-        StringBuilder message = new StringBuilder();
-
-        if (labels != null) {
-            for (EntityAnnotation label : labels) {
-                message.append(String.format(Locale.US, "%.3f: %s", label.getScore(), label.getDescription()));
-                boolean matchFound = false;
-                int item = 0;
-                while (!matchFound && item < referenceDataSet.size()) {
-                    if (referenceDataSet.get(item).matches(label.getDescription())) {
-                        message.append(", Matched to: " + referenceDataSet.get(item).returnName());
-                        matchFound = true;
-                    }
-                    item++;
-                }
-                message.append("\n");
-            }
-        } else {
-            message.append("nothing");
-        }
-        return message.toString();
-    }
-    //endregion
-
-
-    //region Relevant Info Combining Function
-    private static List<Junk> matchData(List<EntityAnnotation> labels) {
+    //region Response Analysis / Match Function
+    private static Pair matchData(List<EntityAnnotation> labels) {
+        StringBuilder logMessage = new StringBuilder();
         List<Junk> matchedData = new ArrayList<>();
 
         if (labels != null) {
             for (EntityAnnotation label : labels) {
-                boolean matchFound = false;
-                int item = 0;
-                while (!matchFound && item < referenceDataSet.size()) {
-                    if (referenceDataSet.get(item).matches(label.getDescription())) {
-                        if (!matchedData.contains(referenceDataSet.get(item))) {
-                            matchedData.add(referenceDataSet.get(item));
-                            matchFound = true;
-                        }
+                logMessage.append(String.format(Locale.US, "%.3f: %s", label.getScore(), label.getDescription()));
+                Junk match = null;
+                float matchAccuracy = 0;
+                for (int candidate=0;candidate<referenceDataSet.size();candidate++) {
+                    float accuracy = referenceDataSet.get(candidate).matches(label.getDescription());
+                    if (accuracy > matchAccuracy) {
+                        match = referenceDataSet.get(candidate);
+                        matchAccuracy = accuracy;
                     }
-                    item++;
                 }
+                if (matchAccuracy > 0) {
+                    logMessage.append("," + String.format(" %.3f", matchAccuracy) + " match to: ").append(match.returnName());
+                    match.setAccuracy(matchAccuracy*label.getScore());
+                    matchedData.add(match);
+                }
+                logMessage.append("\n");
             }
-            if (matchedData == null) {
-                List<String> empty = new LinkedList<String>();
+            if (matchedData.equals(new ArrayList<>())) {
+                List<String> empty = new LinkedList<>();
                 matchedData.add(new Junk("No Matches Found!",empty,"",""));
             }
         }
-        return matchedData;
+        return new Pair(logMessage.toString(),matchedData);
     }
     //endregion
 
@@ -392,8 +389,22 @@ public class MainActivity extends AppCompatActivity {
             Log.e(TAG, "File Not Found: " + e);
         }
 
-        testLabel.setText("Done. Fetched "+logItems+" items in "+(java.lang.System.currentTimeMillis()-logTime)+"ms!");
+        debugLabel.setText("Done. Fetched "+logItems+" items in "+(java.lang.System.currentTimeMillis()-logTime)+"ms!");
         return referenceData;
+    }
+    //endregion
+
+
+    //region (Support Function) Method Pair Return
+    static final class Pair {
+        private final String text;
+        private final List<Junk> junkList;
+        public Pair(String first, List<Junk> second) {
+            this.text = first;
+            this.junkList = second;
+        }
+        public String getText() {return text;}
+        public List<Junk> getList() {return junkList;}
     }
     //endregion
 
@@ -402,25 +413,29 @@ public class MainActivity extends AppCompatActivity {
     //region MAIN FUNCTION
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // GUI Objects
+        ImageButton cameraButton;
+        Button discoverButton;
+
         // Connect GUI with Code
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         cameraButton = findViewById(R.id.cameraButton);
         discoverButton = findViewById(R.id.discoverButton);
-        testLabel = findViewById(R.id.helloLabel);
+        debugLabel = findViewById(R.id.helloLabel);
 
         // Import Data-Set
         referenceDataSet = importDataset();
 
         // Camera Button Pressed
         cameraButton.setOnClickListener(v -> {
-            testLabel.setText("Opening Camera...");
+            debugLabel.setText("Opening Camera...");
             dispatchTakePictureIntent();
 
         });
 
         discoverButton.setOnClickListener(v -> {
-            testLabel.setText("Opening Discover...");
+            debugLabel.setText("Opening Discover...");
             Intent discoverActivity = new Intent(this, ExploreActivity.class);
             discoverActivity.putExtra("mode","discover");
             startActivity(discoverActivity);

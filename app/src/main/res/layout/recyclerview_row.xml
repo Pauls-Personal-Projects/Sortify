@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--Sortify App, Created 13/03/2021     -->
+<!--Made by Paul & Abdul                -->
+<!--for Google's 2021 Solution Challenge-->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/sortify_green"
+    android:background="@color/material_ultra_light_teal"
     android:orientation="vertical"
     android:padding="10dp">
 
@@ -11,24 +14,28 @@
         android:id="@+id/junkName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:fontFamily="sans-serif"
         android:text="Test Name"
-        android:textColor="@color/black"
-        android:textSize="30sp" />
+        android:textColor="@color/material_ultra_dark_teal"
+        android:textSize="30sp"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/junkAlias"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:fontFamily="sans-serif"
         android:text="Prototype Name"
-        android:textColor="@color/sortify_dark_green"
-        android:textSize="20sp" />
+        android:textColor="#A7CBCF"
+        android:textSize="20sp"
+        android:textStyle="italic" />
 
     <TextView
         android:id="@+id/junkInstruction"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Please Dispose of Responsibly"
-        android:textColor="@color/white"
+        android:textColor="@color/material_ultra_dark_green"
         android:textSize="15sp" />
 
 </LinearLayout>
