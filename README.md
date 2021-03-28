@@ -40,7 +40,7 @@ Project Link: [https://github.com/paulpall/Sortify](https://github.com/paulpall/
 
 # Acknowledgements
 
-- Recycling Information Gathered from North London Waste Authority.
-- Recycling Icon & Logo designed by Pixel perfect from Flaticon.
-- Camera Icon designed by Freepik from Flaticon.
-- Sample code for Google Cloud Vision.
+- Recycling Information Gathered from [North London Waste Authority](https://www.nlwa.gov.uk/).
+- Recycling Icon & Logo designed by [Pixel perfect](https://www.flaticon.com/authors/pixel-perfect) from Flaticon.
+- Camera Icon designed by [Freepik](https://www.flaticon.com/authors/freepik) from Flaticon.
+- Sample code by [Google Cloud Vision](https://github.com/GoogleCloudPlatform/cloud-vision).
