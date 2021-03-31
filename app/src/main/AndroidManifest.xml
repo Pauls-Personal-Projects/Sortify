@@ -4,6 +4,7 @@
 <!--for Google's 2021 Solution Challenge-->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="google.sc21.sortify">
     <!-- This Ensures that Only Devices with a Camera can Download our App -->
     <uses-feature
@@ -19,8 +20,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Sortify">
-        <activity android:name=".ExploreActivity" />
-        <activity android:name=".MainActivity">
+        <activity
+            android:name=".ExploreActivity"
+            android:screenOrientation="portrait"
+            tools:ignore="LockedOrientationActivity"/>
+        <activity
+            android:name=".MainActivity"
+            android:screenOrientation="portrait"
+            tools:ignore="LockedOrientationActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

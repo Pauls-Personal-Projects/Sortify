@@ -4,6 +4,7 @@
 * Sortify App, Created 13/03/2021
 * Made by Paul & Abdul
 * for Google's 2021 Solution Challenge
+* https://github.com/paulpall/Sortify/
 * --------------------------------------------------
 * CREDITS:
 *
@@ -16,6 +17,11 @@
 * --------------------------------------------------
 * VERSION HISTORY:
 *
+* Version 1.0:
+*  !!! Play Store Launch Version !!!
+*  Minor Bug-Fixes and Feature Additions
+*  Created JavaDoc Documentation!
+* - - - - - - - - - - - - - - - - - - - - - - - - -
 * Version 0.9:
 *  Fixed a Bunch of Bugs
 *  Updated Gradle Dependencies (where possible)
@@ -60,7 +66,8 @@
 * - - - - - - - - - - - - - - - - - - - - - - - - -
 * Version 0.1:
 *   First Commit! Empty Android Studio Template.
- */
+* --------------------------------------------------
+*/
 //endregion
 
 
@@ -72,14 +79,12 @@ package google.sc21.sortify;
 
 //region IMPORT REQUIRED PACKAGES
 // New Android X Classes
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 // Android Classes
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -140,7 +145,9 @@ public class MainActivity extends AppCompatActivity {
 
 
     //region Capture Photo Functions
-    // Calls Camera Activity:
+    /** <p>Call Camera Activity.</p>
+     *  @since 0.3
+     */
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         try {
@@ -150,7 +157,9 @@ public class MainActivity extends AppCompatActivity {
             debugLabel.setText("Houston, we have a problem!?");
         }
     }
-    // Returns Image from Camera Activity:
+    /** <p>Returns Image from Camera Activity.</p>
+     *  @since 0.3
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -164,7 +173,10 @@ public class MainActivity extends AppCompatActivity {
 
 
     //region Process Photo Functions
-    // Sets the Image and Calls Cloud:
+    /** <p>Tweaks the Image and Calls Cloud.</p>
+     * @since 0.4
+     * @param bitmapImage Image that will be sent to Google Cloud.
+     */
     public void uploadImage(Bitmap bitmapImage) {
         if (bitmapImage != null) {
             Bitmap bitmap = scaleBitmapDown(bitmapImage, MAX_DIMENSION);
@@ -174,7 +186,13 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.image_picker_error, Toast.LENGTH_LONG).show();
         }
     }
-    // Scales the Image to Save on Bandwidth:
+    /** <p>Scales the Image to Save on Bandwidth.</p>
+     * Simple method that scales the image down while keeping the original aspect ratio.
+     * @since 0.4
+     * @param bitmap Image that will be resized.
+     * @param maxDimension The dimension that the longer edge will be resized to.
+     * @return Resized Image.
+     */
     private Bitmap scaleBitmapDown(Bitmap bitmap, int maxDimension) {
         int originalWidth = bitmap.getWidth();
         int originalHeight = bitmap.getHeight();
@@ -197,6 +215,11 @@ public class MainActivity extends AppCompatActivity {
 
 
     //region Threading Function
+    /** <p>Start Background Processing Thread & Open Results Activity.</p>
+     * Starts the background thread where we send the image to Google, receive results & match those to our dataset.
+     * @since 0.4
+     * @param bitmap Image that will be sent to Google.
+     */
     private void callCloudVision(final Bitmap bitmap) {
         //Switch Text to Loading
         debugLabel.setText(R.string.loading_message);
@@ -216,15 +239,29 @@ public class MainActivity extends AppCompatActivity {
 
 
     //region Thread Tasks Class
+    /** Background Processing Thread...
+     *
+     * Thread that handles Communication with Google Cloud & Matching the Detected Labels with our Dataset.
+     * @author Paul, Google Cloud Platform
+     *
+     */
     private static class LabelDetectionTask extends AsyncTask<Object, Void, Pair> {
         private final WeakReference<MainActivity> mActivityWeakReference;
         private Vision.Images.Annotate mRequest;
+
+
 
         LabelDetectionTask(MainActivity activity, Vision.Images.Annotate annotate) {
             mActivityWeakReference = new WeakReference<>(activity);
             mRequest = annotate;
         }
 
+
+        /**
+         * {@inheritdoc}
+         * @since 0.4
+         * @return A Pair Object consisting of Matched Items and Log text.
+         */
         @Override
         protected Pair doInBackground(Object... params) {
             try {
@@ -242,6 +279,12 @@ public class MainActivity extends AppCompatActivity {
             //return "Cloud Vision API request failed. Check logs for details.";
         }
 
+
+        /**
+         * {@inheritdoc}
+         * @since 0.4
+         * @param resultPair A Pair Object consisting of Matched Items and Log text.
+         */
         protected void onPostExecute(Pair resultPair) {
             MainActivity activity = mActivityWeakReference.get();
             if (activity != null && !activity.isFinishing()) {
@@ -265,10 +308,15 @@ public class MainActivity extends AppCompatActivity {
 
 
     //region Google Cloud Communication Function
+    /** <p>Constructs Image Recognition Request.</p>
+     * Provided the API Key from our module gradle, Request labels for the image. Also converts the bitmap image to jpeg.
+     * @since 0.4
+     * @param bitmap Image that will be sent to Google.
+     * @return Request that Google Cloud can read.
+     */
     private Vision.Images.Annotate prepareAnnotationRequest(Bitmap bitmap) throws IOException {
         HttpTransport httpTransport = AndroidHttp.newCompatibleTransport();
         JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
-
         VisionRequestInitializer requestInitializer =
                 new VisionRequestInitializer(CLOUD_VISION_API_KEY) {
                     /**
@@ -279,23 +327,17 @@ public class MainActivity extends AppCompatActivity {
                     protected void initializeVisionRequest(VisionRequest<?> visionRequest)
                             throws IOException {
                         super.initializeVisionRequest(visionRequest);
-
                         String packageName = getPackageName();
                         visionRequest.getRequestHeaders().set(ANDROID_PACKAGE_HEADER, packageName);
-
                         String sig = PackageManagerUtils.getSignature(getPackageManager(), packageName);
-
                         visionRequest.getRequestHeaders().set(ANDROID_CERT_HEADER, sig);
                     }
                 };
-
         Vision.Builder builder = new Vision.Builder(httpTransport, jsonFactory, null);
+
         builder.setVisionRequestInitializer(requestInitializer);
-
         Vision vision = builder.build();
-
-        BatchAnnotateImagesRequest batchAnnotateImagesRequest =
-                new BatchAnnotateImagesRequest();
+        BatchAnnotateImagesRequest batchAnnotateImagesRequest = new BatchAnnotateImagesRequest();
         batchAnnotateImagesRequest.setRequests(new ArrayList<AnnotateImageRequest>() {{
             AnnotateImageRequest annotateImageRequest = new AnnotateImageRequest();
 
@@ -323,8 +365,7 @@ public class MainActivity extends AppCompatActivity {
             add(annotateImageRequest);
         }});
 
-        Vision.Images.Annotate annotateRequest =
-                vision.images().annotate(batchAnnotateImagesRequest);
+        Vision.Images.Annotate annotateRequest = vision.images().annotate(batchAnnotateImagesRequest);
         // Due to a bug: requests to Vision API containing large images fail when GZipped.
         annotateRequest.setDisableGZipContent(true);
         Log.d(TAG, "created Cloud Vision request object, sending request");
@@ -335,6 +376,12 @@ public class MainActivity extends AppCompatActivity {
 
 
     //region Response Analysis / Match Function
+    /** <p>Match Recognised Image Labels to our Dataset</p>
+     * Given labels that were recognised on an image, match them with our dataset and calculate combined accuracy.
+     * @since 0.7
+     * @param labels A list of labels recognised on an image.
+     * @return A Pair Object consisting of a List of Matched Junk Items and Log text.
+     */
     private static Pair matchData(List<EntityAnnotation> labels) {
         StringBuilder logMessage = new StringBuilder();
         List<Junk> matchedData = new ArrayList<>();
@@ -369,6 +416,11 @@ public class MainActivity extends AppCompatActivity {
 
 
     //region CSV File Import Function
+    /** <p>Import CSV Dataset</p>
+     * Takes a .csv file from assets and imports it to a List of Junk items.
+     * @since 0.6
+     * @return A List of Junk items.
+     */
     private List<Junk> importDataset() {
         List<Junk> referenceData = new ArrayList<>();
         long logTime = java.lang.System.currentTimeMillis();
@@ -395,7 +447,13 @@ public class MainActivity extends AppCompatActivity {
     //endregion
 
 
-    //region (Support Function) Method Pair Return
+    //region (Support Class) Method Pair Return
+    /** Pair Object for Returning Several Objects from a Method...
+     *
+     * Container for transferring several objects between methods.
+     * @author Paul
+     *
+     */
     static final class Pair {
         private final String text;
         private final List<Junk> junkList;
@@ -411,23 +469,27 @@ public class MainActivity extends AppCompatActivity {
 
 
     //region MAIN FUNCTION
+    /** <p>Main Method</p>
+     * Handles Tasks on App Launch.
+     * @since 0.1
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // GUI Objects
+        //GUI Objects
         ImageButton cameraButton;
         Button discoverButton;
 
-        // Connect GUI with Code
+        //Tie the GUI with Code
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         cameraButton = findViewById(R.id.cameraButton);
         discoverButton = findViewById(R.id.discoverButton);
         debugLabel = findViewById(R.id.helloLabel);
 
-        // Import Data-Set
+        //Import Data-Set
         referenceDataSet = importDataset();
 
-        // Camera Button Pressed
+        //Camera Button Pressed
         cameraButton.setOnClickListener(v -> {
             debugLabel.setText("Opening Camera...");
             dispatchTakePictureIntent();

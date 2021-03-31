@@ -1,16 +1,41 @@
+/*
+ * --------------------------------------------------
+ * Sortify App, Created 13/03/2021
+ * Made by Paul & Abdul
+ * for Google's 2021 Solution Challenge
+ * https://github.com/paulpall/Sortify/
+ * --------------------------------------------------
+ * Junk.java is the class for our object.
+ * This object contains all the necessary information
+ *  that we store for a single item of trash.
+ */
 package google.sc21.sortify;
 
+
+// REQUIRED PACKAGES:
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 
+
+
+/** Junk Data Object...
+ *
+ * Object that represents a single item of Junk for our app.
+ * @author Paul
+ *
+ */
 public class Junk {
+    //Junk Item Parameters:
     private String name;
     private List<String> aliases = new LinkedList<>();
     private String guidance;
     private String link;
     private float accuracy;
 
+
+
+    //Constructors:
     public Junk(String junkName, List<String> junkAliases, String junkGuidance, String junkURL) {
         name = junkName;
         aliases = junkAliases;
@@ -19,6 +44,15 @@ public class Junk {
     }
     private Junk() {}
 
+
+
+    //region ITEM CONSTRUCTION FUNCTION
+    /** <p>Constructs an Item from a CSV line</p>
+     * A Method for Constructing a new Item from a CSV line.
+     * @param scanner A line/row of CSV data
+     * @return A new Junk object Item.
+     * @since 0.6
+     */
     public static Junk newItemFromCSV(Scanner scanner) {
         Junk item = new Junk();
         item.name = scanner.next();
@@ -46,8 +80,16 @@ public class Junk {
         item.accuracy = 0;
         return item;
     }
+    //endregion
 
-    // Returns how accurate the match is
+
+    //region MATCH COMPARISON FUNCTION
+    /** <p>Checks Whether & How Much a Label Matches to an Item</p>
+     * A Method for Checking Whether and How Much a String Matches to a Junk Item's Name and Alias.
+     * @param label A string that will be compared against the item.
+     * @return How much the given label matches. (0 = Not a Match & 1 = 100% Match)
+     * @since 0.6
+     */
     public float matches(String label) {
         String input = label.toLowerCase();
         float accuracy = 0;
@@ -95,12 +137,14 @@ public class Junk {
         }
         return accuracy;
     }
+    //endregion
 
+
+
+    //Methods for Accessing Information Outside of Class:
     public String returnName() {return name;}
     public List<String> returnAliases() {return aliases;}
     public String returnInfo() {return guidance;}
     public void setAccuracy(float value) {accuracy = value;}
     public float returnAccurcay() {return accuracy;}
-
-
 }
